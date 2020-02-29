@@ -1,9 +1,12 @@
 import codecs, os, smtplib, socket
 import configparser
-# import ipgetter as ipget
 import shutil
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+
+
+def version():
+    return '1.0'
 
 
 def get_filelist(the_pathes, included_ext=['.txt']):
@@ -14,12 +17,15 @@ def get_filelist(the_pathes, included_ext=['.txt']):
 
 def save_txt(filename, text, rewrite=False, codec='utf-8', warns=True):
     mode = 'w' if rewrite else 'a'
+    saved = False
     try:
         with codecs.open(filename, mode, codec) as temp:
             temp.write(text)
+            saved = True
     except Exception as err:
         if warns:
             print(err)
+    return saved
 
 
 def load_txt(filename, codec='utf-8', warns=True):
@@ -288,10 +294,11 @@ def read_ini(INI_FILE, section, key, default):
         pass
     return result
 
-def write_ini(INI_FILE, section, key,value):
+
+def write_ini(INI_FILE, section, key, value):
     try:
         config = configparser.RawConfigParser()
-        #config.add_section(section)
+        # config.add_section(section)
         config.read(INI_FILE)
         config.set(section, key, value)
         # Writing our configuration file to INI_FILE
@@ -300,6 +307,7 @@ def write_ini(INI_FILE, section, key,value):
     except BaseException as err:
         print(err)
     return
+
 
 if __name__ == '__main__':
     all = dir(__file__)
