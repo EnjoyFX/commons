@@ -1,13 +1,14 @@
-import codecs, os, smtplib, socket
+import codecs, os, smtplib, socket, re
 import configparser
 import shutil
+import time
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 
 def version():
-    return '1.1 from 1/10/2018'
+    return '1.2 from 1/17/2018'
 
 
 def cur_timestamp(fmt='%Y.%m.%d %H:%M:%S'):
@@ -24,6 +25,25 @@ def get_next(lst):
     itm = lst.pop(0)
     lst.append(itm)
     return itm
+
+
+def cur_dir(name=''):
+    name = __file__ if name == '' else name
+    dir = os.path.dirname(os.path.abspath(name))
+    dir = os.path.join(dir, '')
+    return dir
+
+
+def make_dir(full_path, warns=True):
+    try:
+        os.makedirs(full_path, exist_ok=True)
+    except BaseException as err:
+        if warns:
+            print(err)
+
+
+def os_join(path, *paths):
+    return os.path.join(path, *paths)
 
 
 def get_filelist(the_pathes, included_ext=['.txt']):
@@ -103,6 +123,19 @@ def file_backup(filename, older_ext='bak', warns=True):
         except BaseException as err:
             if warns:
                 print(err)
+
+
+def file_date(filename, fmt='', warns=True):
+    file_d = 0
+    try:
+        mtime = os.path.getmtime(filename)
+        file_d = datetime.fromtimestamp(mtime)
+        if fmt:
+            file_d = datetime.strftime(file_d, fmt)
+    except OSError as err:
+        if warns:
+            print(err)
+    return file_d
 
 
 def delete_folder_content(folder):
@@ -334,6 +367,72 @@ def write_ini(INI_FILE, section, key, value):
     except BaseException as err:
         print(err)
     return
+
+
+def txt_lines_from_end(txt, lines_num):
+    pass
+
+
+def sep(s, thou=',', dec='.', show_decimals=True):
+    s = str(s)
+    all = s.split('.')
+    try:
+        integer = all[0]
+    except BaseException:
+        integer = ''
+
+    try:
+        decimal = all[1]
+    except BaseException:
+        decimal = ''
+    integer = re.sub(r'\B(?=(?:\d{3})+$)', thou, integer)
+    if show_decimals:
+        return integer + dec + decimal
+    else:
+        return integer
+
+
+def to_list(text_or_list, separator=','):
+    if isinstance(text_or_list, str):
+        return text_or_list.split(separator)
+    elif isinstance(text_or_list, list):
+        return text_or_list
+    else:
+        return []
+
+
+def stamp_to_time(stamp, fmt='%d.%m.%Y %H:%M:%S'):
+    stamp = float(stamp)
+    dt = datetime.fromtimestamp(stamp)
+    if fmt:
+        return dt.strftime(fmt)
+    else:
+        return dt
+    return
+
+
+def sort_by_key(lst_of_dicts, the_key, reverse=True):
+    return sorted(lst_of_dicts, key=lambda r: r[the_key], reverse=reverse)
+
+
+def timeit(method):
+    '''
+    Timeit function for usage as a decorator
+    :param method: 
+    :return: 
+    '''
+    def timed(*args, **kw):
+        ts = time.time()
+        result = method(*args, **kw)
+        te = time.time()
+        if 'log_time' in kw:
+            name = kw.get('log_name', method.__name__.upper())
+            kw['log_time'][name] = int((te - ts) * 1000)
+        else:
+            print('{}(): {:2.2f} ms'.format(method.__name__, (te - ts) * 1000))
+        return result
+
+    return timed
 
 
 def def_list(filename, pseudo=''):
