@@ -1,7 +1,6 @@
 import codecs, os, smtplib, socket, re
 import configparser
 import shutil
-import time
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -197,6 +196,20 @@ def gMid(expression, delimiter1, delimiter2):
 def make_list_unique(lst):
     set_lst = set(lst)
     return (list(set_lst))
+
+
+def is_pinged_ok(url, timeout=5, ok_statuses=[200, 201]):
+    import requests
+    result, status, msg = True, 0, ''
+    try:
+        r = requests.get(url, timeout=timeout)
+        status = r.status_code
+        if status not in ok_statuses:
+            result = False
+    except BaseException as err:
+        msg = str(err)
+        result = False
+    return {'result': result, 'status': status, 'msg': msg}
 
 
 def send_mail(toaddr, subject, body, fromaddr='vba.app@gmail.com', pwd=''):
@@ -414,25 +427,8 @@ def stamp_to_time(stamp, fmt='%d.%m.%Y %H:%M:%S'):
 def sort_by_key(lst_of_dicts, the_key, reverse=True):
     return sorted(lst_of_dicts, key=lambda r: r[the_key], reverse=reverse)
 
-
-def timeit(method):
-    '''
-    Timeit function for usage as a decorator
-    :param method: 
-    :return: 
-    '''
-    def timed(*args, **kw):
-        ts = time.time()
-        result = method(*args, **kw)
-        te = time.time()
-        if 'log_time' in kw:
-            name = kw.get('log_name', method.__name__.upper())
-            kw['log_time'][name] = int((te - ts) * 1000)
-        else:
-            print('{}(): {:2.2f} ms'.format(method.__name__, (te - ts) * 1000))
-        return result
-
-    return timed
+def sort_dict_by_subkey(dict, sub_key):
+    return sorted(dict.keys(), key=lambda x: (dict[x][sub_key], dict[x]))
 
 
 def def_list(filename, pseudo=''):
