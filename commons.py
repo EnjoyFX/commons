@@ -1,5 +1,6 @@
 import codecs, os, smtplib, socket
-import ipgetter as ipget
+import configparser
+# import ipgetter as ipget
 import shutil
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -59,9 +60,14 @@ def file_rename(old_name, new_name):
 
 
 def file_delete(filename):
+    """
+    Sub for file delete
+    :param filename: full path and filename to delete
+    :return: 
+    """
     try:
         os.remove(filename)
-    except Exception as err:
+    except BaseException as err:
         print(err)
     return
 
@@ -139,6 +145,7 @@ def send_mail(toaddr, subject, body, fromaddr='vba.app@gmail.com', pwd=''):
     :return:  string '' or error message
     '''
     msg = MIMEMultipart()
+
     msg['From'] = fromaddr
     msg['To'] = toaddr
     msg['Subject'] = subject
@@ -152,10 +159,11 @@ def send_mail(toaddr, subject, body, fromaddr='vba.app@gmail.com', pwd=''):
         text = msg.as_string()
         server.sendmail(fromaddr, toaddr, text)
         server.quit()
+        return res
     except BaseException as error:
         res = 'Something wrong with email sending...'
         print(res + '\n' + str(error))
-    return res
+        return res
 
 
 def my_ip0():
@@ -170,14 +178,14 @@ def my_ip0():
     return ret
 
 
-def my_external_ip():
-    ip = ''
-    try:
-        # ip = get('https://api.ipify.org').text
-        ip = ipget.myip()
-    except Exception as err:
-        print(err)
-    return ip
+# def my_external_ip():
+#     ip = ''
+#     try:
+#         # ip = get('https://api.ipify.org').text
+#         ip = ipget.myip()
+#     except Exception as err:
+#         print(err)
+#     return ip
 
 
 def find_location_in_registry(prog_name):
@@ -267,7 +275,31 @@ def make_session_id(st):
 
     r_uuid = str(base64.urlsafe_b64encode(uuid.uuid4().bytes))
     return r_uuid.replace('=', '')
+    return r_uuid.replace('=', '')
 
+
+def read_ini(INI_FILE, section, key, default):
+    result = default
+    try:
+        config = configparser.RawConfigParser()
+        config.read(INI_FILE)
+        result = config.get(section, key)
+    except Exception as err:
+        pass
+    return result
+
+def write_ini(INI_FILE, section, key,value):
+    try:
+        config = configparser.RawConfigParser()
+        #config.add_section(section)
+        config.read(INI_FILE)
+        config.set(section, key, value)
+        # Writing our configuration file to INI_FILE
+        with open(INI_FILE, 'w') as configfile:
+            config.write(configfile)
+    except BaseException as err:
+        print(err)
+    return
 
 if __name__ == '__main__':
     all = dir(__file__)
