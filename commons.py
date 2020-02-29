@@ -1,12 +1,29 @@
 import codecs, os, smtplib, socket
 import configparser
 import shutil
+from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 
 def version():
-    return '1.0'
+    return '1.1 from 1/10/2018'
+
+
+def cur_timestamp(fmt='%Y.%m.%d %H:%M:%S'):
+    return str(datetime.strftime(datetime.now(), fmt))
+
+
+def save_log(text, filename='log.txt', new=False, scr=False):
+    save_txt(filename, cur_timestamp() + ' ' + text + '\n', rewrite=new, warns=False)
+    if scr:
+        print(text)
+
+
+def get_next(lst):
+    itm = lst.pop(0)
+    lst.append(itm)
+    return itm
 
 
 def get_filelist(the_pathes, included_ext=['.txt']):
@@ -76,6 +93,16 @@ def file_delete(filename):
     except BaseException as err:
         print(err)
     return
+
+
+def file_backup(filename, older_ext='bak', warns=True):
+    if is_exists(filename):
+        try:
+            ext = filename.split('.')[-1]  # get extension
+            file_rename(filename, filename.replace(ext, older_ext))
+        except BaseException as err:
+            if warns:
+                print(err)
 
 
 def delete_folder_content(folder):
@@ -309,8 +336,14 @@ def write_ini(INI_FILE, section, key, value):
     return
 
 
+def def_list(filename, pseudo=''):
+    print('Functions in', filename if pseudo == '' else pseudo)
+    import re
+    pattern = re.compile("de" + "f (.*)\:")
+    for i, line in enumerate(open(filename)):
+        for match in re.finditer(pattern, line):
+            print(match.groups()[0])
+
+
 if __name__ == '__main__':
-    all = dir(__file__)
-    count = len(all)
-    print('Functions in file:', count, '\nNames:', all)
-    print(__file__)
+    def_list(__file__)
