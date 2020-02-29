@@ -1,13 +1,20 @@
-import codecs, os, smtplib, socket, re
+import codecs, os, smtplib, socket
 import configparser
 import shutil
+import requests
+import time
+import ctypes
+import platform
+import psutil
+import re
+import hashlib, base64, uuid
+
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-
-def version():
-    return '1.2 from 1/17/2018'
+VER = '1.3'
+VER_DATE = '3/31/2018'
 
 
 def cur_timestamp(fmt='%Y.%m.%d %H:%M:%S'):
@@ -199,7 +206,7 @@ def make_list_unique(lst):
 
 
 def is_pinged_ok(url, timeout=5, ok_statuses=[200, 201]):
-    import requests
+    # import requests
     result, status, msg = True, 0, ''
     try:
         r = requests.get(url, timeout=timeout)
@@ -301,9 +308,8 @@ def find_location_in_registry(prog_name):
 
 def get_free_space_mb(dirname):
     """Return folder/drive free space (in megabytes)."""
-    import ctypes
-    import platform
-    import sys
+    # import ctypes
+    # import platform
 
     if platform.system() == 'Windows':
         free_bytes = ctypes.c_ulonglong(0)
@@ -315,7 +321,7 @@ def get_free_space_mb(dirname):
 
 
 def get_pc_stat():
-    import psutil
+    # import psutil
     result = {}
     try:
         cpu_percent = psutil.cpu_percent()
@@ -327,7 +333,7 @@ def get_pc_stat():
 
 
 def make_session_id2(st):
-    import hashlib, time, base64
+    # import hashlib, time, base64
     m = hashlib.md5()
     m.update(
         b'ThiS is s B tTheJdsYsdef9igvcj;fpoqertre{((string d]dpWS{shsvcj;fpoqertreq ((string d sd WS sdue#WERRiwedjcjdhQQWQWWuehrjvcj;fpoqertreq ((string d sd WS sws fddeeuriewhfncsdbvjhwerh00')
@@ -339,7 +345,7 @@ def make_session_id2(st):
 
 
 def make_session_id(st):
-    import base64, uuid
+    # import base64, uuid
     x = uuid.uuid1()
     print(str(x))
 
@@ -424,21 +430,91 @@ def stamp_to_time(stamp, fmt='%d.%m.%Y %H:%M:%S'):
     return
 
 
+def timeit(method):
+    '''
+    Timeit function for usage as a decorator
+    :param method: 
+    :return: 
+    '''
+
+    def timed(*args, **kw):
+        ts = time.time()
+        result = method(*args, **kw)
+        te = time.time()
+        if 'log_time' in kw:
+            name = kw.get('log_name', method.__name__.upper())
+            kw['log_time'][name] = int((te - ts) * 1000)
+        else:
+            print(method.__module__ + '.{}(): {:2.2f} ms'.format(method.__name__, (te - ts) * 1000))
+        return result
+
+    return timed
+
+
 def sort_by_key(lst_of_dicts, the_key, reverse=True):
     return sorted(lst_of_dicts, key=lambda r: r[the_key], reverse=reverse)
+
 
 def sort_dict_by_subkey(dict, sub_key):
     return sorted(dict.keys(), key=lambda x: (dict[x][sub_key], dict[x]))
 
 
-def def_list(filename, pseudo=''):
-    print('Functions in', filename if pseudo == '' else pseudo)
-    import re
+def def_list(filename, pseudo='', numbers=False):
+    try:
+        version = VER
+    except NameError:
+        version = ''
+
+    try:
+        ver_date = ' from {}'.format(VER_DATE)
+    except NameError:
+        ver_date = ''
+
+    print('Functions in "{}" [ver.{}{}]:'.format(filename if pseudo == '' else pseudo, version, ver_date))
+    # import re
     pattern = re.compile("de" + "f (.*)\:")
+    counter = 1
     for i, line in enumerate(open(filename)):
         for match in re.finditer(pattern, line):
-            print(match.groups()[0])
+            print('{:<5}'.format(counter) if numbers else '', match.groups()[0])
+            counter += 1
+
+
+def test_me(operation, tries=5, loops=100000):
+    all = []
+    print('Start speed test for {} loops in {} tries:'.format(loops, tries))
+    print('Operation: {}'.format(operation))
+    for outer in range(1, tries + 1):
+        ts = time.time()
+        for inner in range(1, loops + 1):
+            # >----- function to test start ----->
+            result = eval(operation)
+            # c = "Andy and {} = {}".format(a, b)
+            # c = "Andy and " + a + " = " + b
+            # <----- function to test end   -----<
+        te = time.time()
+        t = (te - ts) * 1000
+        all.append(t)
+
+    for i, t in enumerate(all):
+        print('try {}: {:2.2f} ms'.format(i + 1, t))
+    sum_ = sum(all)
+    avg_ = sum_ / len(all)
+    min_, max_ = min(all), max(all)
+    ampl = max_ - min_
+    print('Avg time: {:2.2f} ms, per one loop: {:2.8f} ms'.format(avg_, avg_ / loops))
+    out = 'Min time: {:2.2f} ms, max time: {:2.2f} ms, amplitude: {:2.2f} ms'.format(min_, max_, ampl)
+    a_ = len(out) - 2
+    l_ = a_ * '-'
+    a_pos = int((avg_ / max_) * a_)
+    print(out)
+    t_ = l_[:a_pos - 1] + 'X' + l_[a_pos:]
+    print('|{}|'.format(t_))
+    print('Total   time: {:2.2f} ms'.format(sum_))
+    print('Operation result: {}\n'.format(result))
 
 
 if __name__ == '__main__':
-    def_list(__file__)
+    # def_list(__file__)
+    test_me('"Andy and {} = {}".format("Julia", "Love")')
+    test_me('"Andy and " + "Julia" + " = " + "Love"')
