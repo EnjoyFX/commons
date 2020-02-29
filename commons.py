@@ -1,4 +1,8 @@
-import codecs, os
+import codecs, os, smtplib, socket
+import ipgetter as ipget
+import shutil
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 
 def get_filelist(the_pathes, included_ext=['.txt']):
@@ -31,6 +35,57 @@ def is_exists(filename):
     return True if os.path.exists(filename) else False
 
 
+def filesize(file):
+    result = -1
+    try:
+        result = os.stat(file).st_size
+    except Exception as err:
+        print(err)
+    return result
+
+
+def file_rename(old_name, new_name):
+    """
+    Sub for file renaming
+    :param old_name: old file name with full path
+    :param new_name: new filename with full path
+    :return: 
+    """
+    try:
+        shutil.move(old_name, new_name)
+    except Exception as err:
+        print(err)
+    return
+
+
+def file_delete(filename):
+    try:
+        os.remove(filename)
+    except Exception as err:
+        print(err)
+    return
+
+
+def delete_folder_content(folder):
+    """
+    Sub for deletion of all files and subfolders in a selected folder
+    :param folder: Full path to the folder, where all data should be removed
+    :return: Empty string or Error message
+    """
+    result = ''
+    for the_file in os.listdir(folder):
+        file_path = os.path.join(folder, the_file)
+        try:
+            if os.path.isfile(file_path):
+                os.unlink(file_path)  # it's the same as os.remove()
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+        except Exception as err:
+            print(err)
+            result = str(err)
+    return result
+
+
 def txt_to_list(txt):
     txt = txt.replace('\r', '')  # remove \r
     result = txt.split('\n')  # convert to list
@@ -39,6 +94,13 @@ def txt_to_list(txt):
 
 def list_to_txt(lst):
     return '\n'.join(lst)
+
+
+def are_lists_same(lst1, lst2):
+    result = False
+    if set(lst1) == set(lst2):
+        result = True
+    return result
 
 
 def gLeft(expression, delimiter):
@@ -63,6 +125,148 @@ def gMid(expression, delimiter1, delimiter2):
 def make_list_unique(lst):
     set_lst = set(lst)
     return (list(set_lst))
+
+
+def send_mail(toaddr, subject, body, fromaddr='vba.app@gmail.com', pwd=''):
+    '''
+    Send email from predefined mailbox 
+
+    :param toaddr: email address 'to'
+    :param subject: email subject
+    :param body: email body
+    :param fromaddr: from address
+    :param pwd: password to mailbox
+    :return:  string '' or error message
+    '''
+    msg = MIMEMultipart()
+    msg['From'] = fromaddr
+    msg['To'] = toaddr
+    msg['Subject'] = subject
+
+    msg.attach(MIMEText(body, 'html'))
+    res = ''  # default value is empty string
+    try:
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(fromaddr, pwd)
+        text = msg.as_string()
+        server.sendmail(fromaddr, toaddr, text)
+        server.quit()
+    except BaseException as error:
+        res = 'Something wrong with email sending...'
+        print(res + '\n' + str(error))
+    return res
+
+
+def my_ip0():
+    ret = ''
+    try:
+        ret = socket.gethostbyname(socket.gethostname())
+    except Exception as err:
+        print(err)
+    finally:
+        if ret == '127.0.0.1':
+            ret = socket.gethostbyname(socket.getfqdn())
+    return ret
+
+
+def my_external_ip():
+    ip = ''
+    try:
+        # ip = get('https://api.ipify.org').text
+        ip = ipget.myip()
+    except Exception as err:
+        print(err)
+    return ip
+
+
+def find_location_in_registry(prog_name):
+    # find location of installed program in registry - not for all installations working
+    locations = {}
+    try:
+        import winreg
+    except ImportError:
+        import _winreg as winreg
+    search_path = r"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\" + prog_name
+    try:
+        handle = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, search_path)
+        num_values = winreg.QueryInfoKey(handle)[1]
+        for i in range(num_values):
+            value = winreg.EnumValue(handle, i)
+            names = value[0]
+            values = value[1]
+            keys = value[2]
+            print(names)
+            print(values)
+            print(keys)
+            if names == '':
+                locations['location'] = values
+            elif names == 'Path':
+                locations['path'] = values
+            elif names == 'SaveURL':
+                locations['SaveURL'] = values
+            elif names == 'useURL':
+                locations['useURL'] = values
+    except Exception as err:
+        locations['error'] = err.strerror
+    return locations
+
+
+def get_free_space_mb(dirname):
+    """Return folder/drive free space (in megabytes)."""
+    import ctypes
+    import platform
+    import sys
+
+    if platform.system() == 'Windows':
+        free_bytes = ctypes.c_ulonglong(0)
+        ctypes.windll.kernel32.GetDiskFreeSpaceExW(ctypes.c_wchar_p(dirname), None, None, ctypes.pointer(free_bytes))
+        return free_bytes.value / 1024 / 1024
+    else:
+        st = os.statvfs(dirname)
+        return st.f_bavail * st.f_frsize / 1024 / 1024
+
+
+def get_pc_stat():
+    import psutil
+    result = {}
+    try:
+        cpu_percent = psutil.cpu_percent()
+        mem_usage = psutil.virtual_memory()
+        result = {'cpu': cpu_percent, 'memory': mem_usage}
+    except Exception as err:
+        print(str(err))
+    return result
+
+
+def make_session_id2(st):
+    import hashlib, time, base64
+    m = hashlib.md5()
+    m.update(
+        b'ThiS is s B tTheJdsYsdef9igvcj;fpoqertre{((string d]dpWS{shsvcj;fpoqertreq ((string d sd WS sdue#WERRiwedjcjdhQQWQWWuehrjvcj;fpoqertreq ((string d sd WS sws fddeeuriewhfncsdbvjhwerh00')
+    m.update(str(time.time() * time.time()).encode('utf-8'))
+    m.update(str(st).encode('utf-8'))
+    m.hexdigest()
+    result = base64.b64encode(m.digest()).decode('utf-8')
+    return result
+
+
+def make_session_id(st):
+    import base64, uuid
+    x = uuid.uuid1()
+    print(str(x))
+
+    x = uuid.uuid3(x, 'test')
+    print(str(x))
+
+    x = uuid.uuid4()
+    print(str(x))
+
+    x = uuid.uuid5(x, 'test')
+    print(str(x))
+
+    r_uuid = str(base64.urlsafe_b64encode(uuid.uuid4().bytes))
+    return r_uuid.replace('=', '')
 
 
 if __name__ == '__main__':
