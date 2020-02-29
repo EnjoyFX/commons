@@ -8,6 +8,8 @@ import platform
 import psutil
 import re
 import hashlib, base64, uuid
+import logging
+
 
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
@@ -513,6 +515,33 @@ def test_me(operation, tries=5, loops=100000):
     print('Total   time: {:2.2f} ms'.format(sum_))
     print('Operation result: {}\n'.format(result))
 
+def set_logger(log_file,
+               min_level=logging.DEBUG,
+               file_log_level=logging.INFO,
+               screen_log_level=logging.WARNING, delete_previous_log=False):
+    """
+    Create logger & set parameters needed
+    :param log_file: str log file name 
+    :param min_level: optional = minimum logging level
+    :param file_log_level: optional = level for save to file 
+    :param screen_log_level: optional = level to show on a screen
+    :return: logger object  
+    """
+    if delete_previous_log:
+        file_delete(log_file)
+
+    the_logger = logging.getLogger()
+    the_logger.setLevel(min_level)
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    fh = logging.FileHandler(log_file)
+    fh.setLevel(file_log_level)
+    fh.setFormatter(formatter)
+    the_logger.addHandler(fh)
+    ch = logging.StreamHandler()
+    ch.setLevel(screen_log_level)
+    ch.setFormatter(formatter)
+    the_logger.addHandler(ch)
+    return the_logger
 
 if __name__ == '__main__':
     # def_list(__file__)
