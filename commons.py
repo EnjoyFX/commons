@@ -45,7 +45,7 @@ def cur_dir(name=''):
 def make_dir(full_path, warns=True):
     try:
         os.makedirs(full_path, exist_ok=True)
-    except BaseException as err:
+    except Exception as err:
         if warns:
             print(err)
 
@@ -114,13 +114,15 @@ def file_delete(filename):
     """
     Sub for file delete
     :param filename: full path and filename to delete
-    :return: 
+    :return: bool True if OK, False if error
     """
+    result = False
     try:
         os.remove(filename)
-    except BaseException as err:
+        result = True
+    except Exception as err:
         print(err)
-    return
+    return Result
 
 
 def file_backup(filename, older_ext='bak', warns=True):
@@ -128,7 +130,7 @@ def file_backup(filename, older_ext='bak', warns=True):
         try:
             ext = filename.split('.')[-1]  # get extension
             file_rename(filename, filename.replace(ext, older_ext))
-        except BaseException as err:
+        except Exception as err:
             if warns:
                 print(err)
 
@@ -167,8 +169,8 @@ def delete_folder_content(folder):
 
 
 def txt_to_list(txt):
-    txt = txt.replace('\r', '')  # remove \r
-    result = txt.split('\n')  # convert to list
+    txt = txt.replace('\r', '') 
+    result = txt.split('\n')
     return result
 
 
@@ -215,13 +217,13 @@ def is_pinged_ok(url, timeout=5, ok_statuses=[200, 201]):
         status = r.status_code
         if status not in ok_statuses:
             result = False
-    except BaseException as err:
+    except Exception as err:
         msg = str(err)
         result = False
     return {'result': result, 'status': status, 'msg': msg}
 
 
-def send_mail(toaddr, subject, body, fromaddr='vba.app@gmail.com', pwd=''):
+def send_mail(toaddr, subject, body, fromaddr, pwd):
     '''
     Send email from predefined mailbox 
 
@@ -248,7 +250,7 @@ def send_mail(toaddr, subject, body, fromaddr='vba.app@gmail.com', pwd=''):
         server.sendmail(fromaddr, toaddr, text)
         server.quit()
         return res
-    except BaseException as error:
+    except Exception as error:
         res = 'Something wrong with email sending...'
         print(res + '\n' + str(error))
         return res
@@ -385,7 +387,7 @@ def write_ini(INI_FILE, section, key, value):
         # Writing our configuration file to INI_FILE
         with open(INI_FILE, 'w') as configfile:
             config.write(configfile)
-    except BaseException as err:
+    except Exception as err:
         print(err)
     return
 
@@ -399,12 +401,12 @@ def sep(s, thou=',', dec='.', show_decimals=True):
     all = s.split('.')
     try:
         integer = all[0]
-    except BaseException:
+    except Exception:
         integer = ''
 
     try:
         decimal = all[1]
-    except BaseException:
+    except Exception:
         decimal = ''
     integer = re.sub(r'\B(?=(?:\d{3})+$)', thou, integer)
     if show_decimals:
