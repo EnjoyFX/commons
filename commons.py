@@ -546,6 +546,6 @@ def set_logger(log_file,
     return the_logger
 
 if __name__ == '__main__':
-    # def_list(__file__)
-    test_me('"Andy and {} = {}".format("Julia", "Love")')
-    test_me('"Andy and " + "Julia" + " = " + "Love"')
+    def_list(__file__)
+    # test_me('"Andy and {} = {}".format("Julia", "Love")')
+    # test_me('"Andy and " + "Julia" + " = " + "Love"')
